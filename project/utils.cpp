@@ -27,7 +27,9 @@ enum class auth_type {
     MEMBER
 };
 
-
+/**
+ * Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
+ */
 void sigchld_handler(int s) {
     int saved_errno = errno;
     while (waitpid(-1, nullptr, WNOHANG) > 0);
@@ -37,6 +39,7 @@ void sigchld_handler(int s) {
 
 /**
  * Get sockaddr, IPv4 or IPv6
+ * Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
  */
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
@@ -47,6 +50,7 @@ void *get_in_addr(struct sockaddr *sa) {
 
 /**
  * Get the hints struct to pass to getaddrinfo()
+ * Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
  */
 struct addrinfo get_hints(bool stream_socket = true) {
     struct addrinfo hints = {};
@@ -59,6 +63,7 @@ struct addrinfo get_hints(bool stream_socket = true) {
 /**
  * Given an addrinfo struct obtained from getaddrinfo(), bind to the
  * first socket available
+ * Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
  */
 int bind_first(struct addrinfo *serv_info, bool stream_socket = true) {
     struct addrinfo *p;
@@ -92,7 +97,10 @@ int bind_first(struct addrinfo *serv_info, bool stream_socket = true) {
     return sock_fd;
 }
 
-
+/**
+ * Connect to the first valid socket() call
+ * Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.2
+ */
 int connect_first(struct addrinfo *serv_info) {
     struct addrinfo *p;
     int sock_fd = -1;

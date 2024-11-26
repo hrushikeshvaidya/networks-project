@@ -2,6 +2,7 @@
 #include <cstring>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <fstream>
 
 #include "utils.cpp"
 
@@ -16,6 +17,7 @@ enum class client_state {
     UNSPECIFIED
 };
 
+int SELF_PORT = 0;
 
 auth_type authenticate(std::string username, std::string password, int sock_fd) {
     std::string auth_request_string = "auth " + username + " " + encrypt_password(password);
@@ -113,6 +115,12 @@ bool validate_request(std::string request, bool is_authenticated, bool is_guest)
             return false;
         }
         if (res.size() == 3 && res[2] == "guest") return false;
+        std::ifstream file(res[1]);
+        if (!file.good()) {
+            std::cout << "Error: invalid file: " << res[1] << std::endl;
+            std::cout << "—--Start a new request—--" << std::endl;
+        }
+        file.close();
         return res.size() == 3;
     }
     if (request.rfind("remove", 0) == 0) {
@@ -133,8 +141,7 @@ bool validate_request(std::string request, bool is_authenticated, bool is_guest)
  */
 std::string process_response(std::string request, std::string response, client_state state) {
     if (state == client_state::LOOKUP) {
-        // TODO: add self port number here
-        std::cout << "The client received the response from the main server using TCP over port " << std::endl;
+        std::cout << "The client received the response from the main server using TCP over port " << SELF_PORT << std::endl;
         if (response == "username 404") {
             std::cout << split(request, " ")[1] << " does not exist. Please try again." << std::endl;
             std::cout << "—--Start a new request—--" << std::endl;
@@ -163,8 +170,7 @@ std::string process_response(std::string request, std::string response, client_s
         else if (response == "__confirm") std::cout << filename << " exists in " << username << "'s repository, do you want to overwrite (y/n)?" << std::endl;
     }
     if (state == client_state::DEPLOY) {
-        // TODO: add self port number
-        std::cout << "The client received the response from the main server using TCP over port " << "" << ". The following files in his/her repository have been deployed" << std::endl;
+        std::cout << "The client received the response from the main server using TCP over port " << SELF_PORT << ". The following files in his/her repository have been deployed" << std::endl;
         std::vector<std::string> res = split(response, ",");
         std::string result = "";
         for (std::string file : res) {
@@ -180,8 +186,7 @@ std::string process_response(std::string request, std::string response, client_s
     }
     if (state == client_state::LOG) {
         std::vector<std::string> res = split(response, ",");
-        // TODO: add self port number
-        std::cout << "The client received the response from the main server using TCP over port " << "" << std::endl;
+        std::cout << "The client received the response from the main server using TCP over port " << SELF_PORT << std::endl;
         for (int i = 0; i < (int) res.size(); i++) {
             if (res[i] == "") continue;
             std::cout << i << ". " << res[i] << std::endl;
@@ -219,13 +224,16 @@ int main(int argc, char *argv[]) {
     int sock_fd;
     // Store the server's TCP connection info
     struct addrinfo *serv_info;
+    // Store the client's socket info
+    sockaddr_in local_addr;
     // Store true if the client is authenticated as a member
     bool is_authenticated = false;
     bool is_guest = false;
 
     while (1) {
         char response[MAX_RESPONSE_SIZE] = "";
-        char request[MAX_REQUEST_SIZE] = "";
+        char request[MAX_REQUEST_SIZE]  = "";
+        // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
         struct addrinfo hints = get_hints(true);
         if ((getaddrinfo(nullptr, PORT_M_TCP, &hints, &serv_info)) != 0) {
             std::cout << "Client: getaddrinfo() failed" << std::endl;
@@ -234,6 +242,10 @@ int main(int argc, char *argv[]) {
 
         sock_fd = connect_first(serv_info);
         freeaddrinfo(serv_info);
+        // Get client port number
+        socklen_t addrlen = sizeof(local_addr);
+        getsockname(sock_fd, (sockaddr*)&local_addr, &addrlen);
+        SELF_PORT = ntohs(local_addr.sin_port);
 
         if (!is_authenticated && !is_guest) {
             auth_type auth = authenticate(argv[1], argv[2], sock_fd);
@@ -248,6 +260,7 @@ int main(int argc, char *argv[]) {
             else {
                 is_authenticated = false;
                 is_guest = false;
+                exit(1);
             }
             continue;
         }
@@ -265,12 +278,9 @@ int main(int argc, char *argv[]) {
         }
         strcpy(request, request_string.c_str());
 
-        std::cout << "----Sending request: " << request << std::endl;
         send(sock_fd, request, strlen(request), 0);
         recv(sock_fd, response, MAX_RESPONSE_SIZE, 0);
         std::string response_string(response);
         process_response(request_string, response_string, state);
-
-        std::cout << "----Received response from server M: " << response << std::endl;
     }
 }

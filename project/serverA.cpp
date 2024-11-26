@@ -35,6 +35,7 @@ int main() {
 
     struct addrinfo hints = get_hints(false);
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     if (getaddrinfo(nullptr, PORT_A, &hints, &serv_info) != 0) {
         std::cout << "Server A: getaddrinfo() failed" << std::endl;
         return 1;
@@ -45,6 +46,7 @@ int main() {
 
     sock_fd = bind_first(serv_info, false);
     // Make a UDP socket for server M
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.3
     struct addrinfo *m_addrinfo;
     for (m_addrinfo = udp_m_serv_info; m_addrinfo != nullptr; m_addrinfo = m_addrinfo->ai_next) {
         if ((udp_m_sock_fd = socket(m_addrinfo->ai_family, m_addrinfo->ai_socktype, m_addrinfo->ai_protocol)) == -1) {
@@ -58,6 +60,7 @@ int main() {
         return 2;
     }
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     sa.sa_handler = sigchld_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;

@@ -54,6 +54,7 @@ int main() {
 
     struct addrinfo hints = get_hints(false);
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     if (getaddrinfo(nullptr, PORT_D, &hints, &serv_info) != 0) {
         std::cout << "Server D: getaddrinfo() failed" << std::endl;
         return 1;
@@ -65,6 +66,7 @@ int main() {
 
     sock_fd = bind_first(serv_info, false);
     // Make a UDP socket for server M
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.3
     struct addrinfo *m_addrinfo;
     for (m_addrinfo = udp_m_serv_info; m_addrinfo != nullptr; m_addrinfo = m_addrinfo->ai_next) {
         if ((udp_m_sock_fd = socket(m_addrinfo->ai_family, m_addrinfo->ai_socktype, m_addrinfo->ai_protocol)) == -1) {
@@ -78,6 +80,7 @@ int main() {
         return 2;
     }
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     sa.sa_handler = sigchld_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
@@ -92,10 +95,9 @@ int main() {
         addr_len = sizeof client_addr;
 
         recvfrom(sock_fd, client_message, MAX_REQUEST_SIZE-1, 0, (struct sockaddr *)&client_addr, &addr_len);
-        // The main server sends requests in the form "deploy <username> <filenames>",
+        // The main server sends requests in the format "deploy <username> <filenames>",
         // where <filenames> is a comma-separated string of filenames belonging to <username>
         std::string request_string(client_message);
-        std::cout << "----Server D received request: " << request_string << std::endl;
         std::cout << "Server D has received a deploy request from the main server" << std::endl;
         std::vector<std::string> res = split(request_string, " ");
         std::string username = res[1];

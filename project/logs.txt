@@ -7,3 +7,26 @@ push file2 DavidJohnson396
 deploy DavidJohnson396
 log DavidJohnson396
 
+auth GraceSmith845 w6ecQsxVVv70
+log GraceSmith845
+push file22 GraceSmith845
+lookup GraceSmith845 GraceSmith845
+log GraceSmith845
+
+auth GraceSmith845 w6ecQsxVVv70
+auth guest jxhvw
+lookup GraceSmith845 guest
+lookup GraceSmith845 GraceSmith845
+log GraceSmith845
+
+
+
+auth GraceSmith845 w6ecQsxVVvdvg
+auth GraceSmith845 w6ecQsxVVv70
+
+auth GraceJones208 aPn5LYsnyIjY
+lookup GraceJones208 GraceJones208
+lookup GraceJones208 GraceJones208
+lookup GraceJones208 GraceJones208
+log GraceJones208
+

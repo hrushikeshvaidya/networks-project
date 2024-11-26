@@ -68,6 +68,7 @@ int main() {
     socklen_t sin_size;
 
     // Handle quitting
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     struct sigaction sa;
     sa.sa_handler = sigchld_handler;
     sigemptyset(&sa.sa_mask);
@@ -80,6 +81,7 @@ int main() {
     struct addrinfo client_hints = get_hints(true);
     struct addrinfo udp_hints = get_hints(false);
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.1
     if (getaddrinfo(nullptr, PORT_M_TCP, &client_hints, &self_tcp_serv_info) != 0) {
         std::cout << "Server M: getaddrinfo() for TCP failed" << std::endl;
         return 1;
@@ -108,10 +110,12 @@ int main() {
         exit(1);
     }
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.3
     // Make a UDP socket for self
     udp_m_sock_fd = bind_first(self_udp_serv_info, false);
     std::cout << "Server M is up and running using UDP on port " << PORT_M_UDP << "." << std::endl;
 
+    // Taken from Beej’s Guide to Network Programming (v3.1.12), section 6.3
     // Make a UDP socket for server A
     struct addrinfo *a_addrinfo;
     for (a_addrinfo = udp_a_serv_info; a_addrinfo != nullptr; a_addrinfo = a_addrinfo->ai_next) {
@@ -168,7 +172,6 @@ int main() {
             close(client_sock_fd);
             recv(client_child_fd, client_message, MAX_REQUEST_SIZE - 1, 0);
             std::string request(client_message);
-            std::cout << "----Received request from client: " << request << std::endl;
             if (request.rfind("auth", 0) == 0) {
                 // Auth request from client has format "auth <username> <password>"
                 std::vector<std::string> res = split(request, " ");
@@ -300,11 +303,6 @@ int main() {
                 std::vector<std::string> res = split(request, " ");
                 std::string logs = get_logs(res[1]);
                 send(client_child_fd, logs.c_str(), MAX_RESPONSE_SIZE, 0);
-            }
-            else {
-                // Otherwise just echo
-                std::cout << "----Echoing request " << client_message << std::endl;
-                send(client_child_fd, client_message, MAX_RESPONSE_SIZE, 0);
             }
             log_request(request);
             exit(0);
