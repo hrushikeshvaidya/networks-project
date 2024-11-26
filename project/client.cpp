@@ -126,6 +126,7 @@ bool validate_request(std::string request, bool is_authenticated, bool is_guest)
         if (!file.good()) {
             std::cout << "Error: invalid file: " << res[1] << std::endl;
             std::cout << "—--Start a new request—--" << std::endl;
+            return false;
         }
         file.close();
         return res.size() == 3;
