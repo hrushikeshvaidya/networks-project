@@ -301,8 +301,10 @@ int main() {
             else if (request.rfind("log", 0) == 0) {
                 // Log request from client has format "log <username>"
                 std::vector<std::string> res = split(request, " ");
+                std::cout << "The main server has received a log request from member " << res[1] << " using TCP over port " << PORT_M_TCP << std::endl;
                 std::string logs = get_logs(res[1]);
                 send(client_child_fd, logs.c_str(), MAX_RESPONSE_SIZE, 0);
+                std::cout << "The main server has sent the log response to the client" << std::endl;
             }
             log_request(request);
             exit(0);

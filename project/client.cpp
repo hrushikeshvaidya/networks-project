@@ -104,11 +104,18 @@ std::string process_request(
 bool validate_request(std::string request, bool is_authenticated, bool is_guest) {
     if (request.rfind("lookup", 0) == 0) {
         std::vector<std::string> res = split(request, " ");
+        if (is_guest && res[1] == "guest") {
+            std::cout << "Error: username is required. Please specify a username to lookup" << std::endl;
+            return false;
+        }
         return res.size() == 3;
     }
     if (request.rfind("push", 0) == 0) {
         // Guests can't push
-        if (is_guest) return false;
+        if (is_guest) {
+            std::cout << "Error: you need to be authenticated to run the push command" << std::endl;
+            return false;
+        }
         std::vector<std::string> res = split(request, " ");
         if (res.size() == 2) {
             std::cout << "Error: filename is required. Please specify a filename to push." << std::endl;
@@ -125,13 +132,32 @@ bool validate_request(std::string request, bool is_authenticated, bool is_guest)
     }
     if (request.rfind("remove", 0) == 0) {
         // Guests can't remove
-        if (is_guest) return false;
+        if (is_guest) {
+            std::cout << "Error: you need to be authenticated to run the remove command" << std::endl;
+            return false;
+        }
         std::vector<std::string> res = split(request, " ");
+        if (res.size() < 3) {
+            std::cout << "Error: filename is required" << std::endl;
+            return false;
+        }
+        if (res.size() > 3) {
+            std::cout << "Error: filename cannot contain spaces" << std::endl;
+            return false;
+        }
         return res.size() == 3;
     }
     if (request.rfind("log", 0) == 0) {
-        // Guests can't log
-        if (is_guest) return false;
+        if (is_guest) {
+            std::cout << "Error: you need to be authenticated to run the log command" << std::endl;
+            return false;
+        }
+    }
+    if (request.rfind("deploy", 0) == 0) {
+        if (is_guest) {
+            std::cout << "Error: you need to be authenticated to run the deploy command" << std::endl;
+            return false;
+        }
     }
     return true;
 }
@@ -273,9 +299,10 @@ int main(int argc, char *argv[]) {
         // Preprocess request
         request_string = process_request(request_string, is_authenticated, is_guest, username, state);
         if (!validate_request(request_string, is_authenticated, is_guest)) {
-            std::cout << "Invalid request: " << request << std::endl;
+            std::cout << "Please enter the command:\n<lookup <username>>\n<push <filename>>\n<remove <filename>>\n<deploy>\n<log>" << std::endl;
             continue;
         }
+
         strcpy(request, request_string.c_str());
 
         send(sock_fd, request, strlen(request), 0);
